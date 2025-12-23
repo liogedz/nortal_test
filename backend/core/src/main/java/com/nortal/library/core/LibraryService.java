@@ -142,7 +142,7 @@ public class LibraryService {
         return Result.failure("ALREADY_RESERVED");
       }
       // auto-borrow and propagate result
-        return borrowBook(bookId, memberId);
+      return borrowBook(bookId, memberId);
     }
     queue.add(memberId);
     bookRepository.save(entity);
