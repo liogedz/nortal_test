@@ -3,6 +3,7 @@ package com.nortal.library.api.config;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -10,6 +11,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,100 +25,106 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
 @Configuration
 public class DevAuthConfig {
-  private static final Logger log = LoggerFactory.getLogger(DevAuthConfig.class);
+    private static final Logger log = LoggerFactory.getLogger(DevAuthConfig.class);
 
-  @Value("${library.security.print-demo-token:false}")
-  private boolean printDemoToken;
+    @Value("${library.security.print-demo-token:false}")
+    private boolean printDemoToken;
 
-  @Bean
-  CommandLineRunner demoTokenPrinter() {
-    return args -> {
-      if (!printDemoToken) {
-        return;
-      }
-      try {
-        RSAPublicKey publicKey = toPublicKey(PUBLIC_KEY_PEM);
-        RSAPrivateKey privateKey = toPrivateKey(PRIVATE_KEY_PEM);
-        RSAKey rsaKey = new RSAKey.Builder(publicKey).privateKey(privateKey).build();
-        JwtEncoder encoder = new NimbusJwtEncoder(new ImmutableJWKSet<>(new JWKSet(rsaKey)));
-        Instant now = Instant.now();
-        JwtClaimsSet claims =
-            JwtClaimsSet.builder()
-                .subject("m1")
-                .issuer("dev-local")
-                .issuedAt(now)
-                .expiresAt(now.plusSeconds(3600))
-                .build();
-        String token = encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
-        log.info("Demo JWT (Bearer): {}", token);
-      } catch (Exception e) {
-        log.warn("Could not generate demo token: {}", e.getMessage());
-      }
-    };
-  }
+    @Bean
+    CommandLineRunner demoTokenPrinter() {
+        return args -> {
+            if (!printDemoToken) {
+                return;
+            }
+            try {
+                RSAPublicKey publicKey = toPublicKey(PUBLIC_KEY_PEM);
+                RSAPrivateKey privateKey = toPrivateKey(PRIVATE_KEY_PEM);
+                RSAKey rsaKey = new RSAKey.Builder(publicKey).privateKey(privateKey).build();
+                JwtEncoder encoder = new NimbusJwtEncoder(new ImmutableJWKSet<>(new JWKSet(rsaKey)));
+                Instant now = Instant.now();
+                JwtClaimsSet claims =
+                        JwtClaimsSet.builder()
+                                .subject("m1")
+                                .issuer("dev-local")
+                                .issuedAt(now)
+                                .expiresAt(now.plusSeconds(3600))
+                                .build();
+                String token = encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+                log.info("Demo JWT (Bearer): {}",
+                        token);
+            } catch (Exception e) {
+                log.warn("Could not generate demo token: {}",
+                        e.getMessage());
+            }
+        };
+    }
 
-  private RSAPublicKey toPublicKey(String pem) throws Exception {
-    String normalized =
-        pem.replace("-----BEGIN PUBLIC KEY-----", "")
-            .replace("-----END PUBLIC KEY-----", "")
-            .replaceAll("\\s", "");
-    byte[] decoded = Base64.getDecoder().decode(normalized);
-    X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decoded);
-    return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(keySpec);
-  }
+    private RSAPublicKey toPublicKey(String pem) throws Exception {
+        String normalized =
+                pem.replace("-----BEGIN PUBLIC KEY-----",
+                                "")
+                        .replace("-----END PUBLIC KEY-----",
+                                "")
+                        .replaceAll("\\s",
+                                "");
+        byte[] decoded = Base64.getDecoder().decode(normalized);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decoded);
+        return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(keySpec);
+    }
 
-  private RSAPrivateKey toPrivateKey(String pem) throws Exception {
-    String normalized =
-        pem.replace("-----BEGIN PRIVATE KEY-----", "")
-            .replace("-----END PRIVATE KEY-----", "")
-            .replaceAll("\\s", "");
-    byte[] decoded = Base64.getDecoder().decode(normalized);
-    PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
-    return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(keySpec);
-  }
+    private RSAPrivateKey toPrivateKey(String pem) throws Exception {
+        String normalized =
+                pem.replace("-----BEGIN PRIVATE KEY-----",
+                                "")
+                        .replace("-----END PRIVATE KEY-----",
+                                "")
+                        .replaceAll("\\s",
+                                "");
+        byte[] decoded = Base64.getDecoder().decode(normalized);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
+        return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+    }
 
-  private static final String PUBLIC_KEY_PEM =
-      """
+    private static final String PUBLIC_KEY_PEM = """
             -----BEGIN PUBLIC KEY-----
-            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu6YV7jzS+S+jhpNe2yBy
-            vly+ba30zYp27zMpznPqk9eoUoDfeTKFPk50UZavCMTThk6TK1KcQHJiZeRTXyji
-            XRhnQK4PBkUKZdbFI+PxqzJ7lp8uWFbXhqKBl1jJ+CSgcSWa+cQe8y0KN6DldecV
-            aWvcsqQP7lKXojb0Pxdy2HPa7DPFHy5aVaaZxdOb4CUQ/5W5xi7IoW8i8oXos9Hp
-            R8/BeQBQK2nH4H4VJxNaiDzQk2V8gMj9YnAfxCajlJVX8Kf+RdS3+6/i1mS0Gm5z
-            5hzVDFmrurjrbVXpBMMNPM2+ToB7vx13vxfZK0mm4OSXfBHZ2zNb0+Hw9uPXCBqT
-            QwIDAQAB
+            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3stATF7kEbQsIoGbY6AJ
+            pnB10hmla/yhKoI7Qs7oYB+oQVv2tTynlvj4snSas2eZNKx/b+WNYZrgSN0mIdF7
+            OxPGnvsp7W3XB8lLpPt3+bRiTCXAMiPvXJZqaMl34EmYmrJKAosAEqheuFQnp9IN
+            +1RftioV2Rjt+2yply1vprNqODwGp3vBPfsxLe9ZSGSIQAGv51nVzRdFr8c6qZSy
+            6fHMRfkjGiWjD6WLdlgRQ8VX1YlG2WBOIqCd7OjHXLK3s5ITJQwECf1h4E2yXDDa
+            Ld5vHUMHG2zalSk1qje0T/AUltjU+qh4GdsWzwLvCILPFl27tbAleXUZoVnyQzE4
+            bQIDAQAB
             -----END PUBLIC KEY-----
             """;
 
-  private static final String PRIVATE_KEY_PEM =
-      """
+    private static final String PRIVATE_KEY_PEM = """
             -----BEGIN PRIVATE KEY-----
-            MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7phXuPNL5L6OG
-            k17bIHK+XL5trfTNinbvMynOc+qT16hSgN95MoU+TnRRlq8IxNOGTpMrUpxAcmJl
-            5FNfKOJdGGdArg8GQQpl1sUj4/GrMnuWny5YVteGoYGXWMn4JKBxJZr5xB7zLQo3
-            oOV15xVpa9yypA/uUpeiNvQ/F3LYc9rsM8UfLlpVppnF05vgJRD/lbnGLsihbyLy
-            heiz0elHz8F5AFAracfgh4UnE1qIPNCQZXyAyP1icB/ENqOUlVfwp/5F1Lf7r+LW
-            ZLQabnPmHNUMWau6uOttVekEww08zb5OgHu/XXe/F9krSabg5Jd8EdnbM1vT4fD2
-            49cIGpNDAgMBAAECggEBAKoOH0qAfgPNxVMlGDZnfX56VFFIomRb0ijCkWz9/Hvi
-            DLgqmFYW4GZ6eRBSfAvJwe4E2K6fP5ew3z5zDQ6O56UGx9SEsn7TFwO2LPa28DZQ
-            isx2wLLlC0YHhgcRxQB+dHJeKpWfwMGpOJKywh1LMslbwpdN7OTMWXuRYBxD8+5k
-            YMFPwzcAezP4cQdReyA3Ze0bf8pahkYhAzDo2XBg2u/syFnDFazQTkUdECcr/W+7
-            5KbOL9ztf64/eU2r2HOvSBoNqBWcSpAFCovTRC6ftqXMB9q1mJIdo8DLGcgklsxg
-            YmPRFpzVQGfCthYvR/x7ksuvVDcfZLY76lGckbbMCOECgYEA7OQ7U0mRfgCJQYMn
-            XqeWuP+0LZgS/4Y8kT8Ml18M8ikVKzFwk83qlwEFAv+F8YCFK8aRy/XEl1k8aePC
-            X+6xInjzYrQFRG+V6+6wPhzT8n1KXLR2nSFWtNnldJK9mIG61r4Q5oWsD5gDJL/B
-            QjhqFCPk5d0YLkKmcnfz8gjklfsCgYEAw7ToBgoy14mErU5sW18LdwxHESZbYVpo
-            lPEzx0yec7cC4E/+L8FSguNyyb13aKRqD2k9qaaFaIXuoqZT3OTbfpSycgqI8sDf
-            P9eWD8Fk2f3gL8oXqgXp7TTfeE3ANYYiVa8y7EUze/bu6xYzXpLIcOy08+jm6Q0A
-            RFm+xbaKM+cCgYEAoJhtQxAbNsVXLf7q2sDkvxp5pm3oa7QAbAuhPQb3R0vAgxNP
-            dpMlx9SUOyHp+PG8nb58PO+1wjTyzqjXeoQOfG4w8f379dsvNADhzkwNqiOwLUNn
-            rXzwIf1q9kTLcM57w3m/nYf7i/8v6JtJyJp0nMR+dY6i9ijqmeNPjWfqh40CgYAO
-            i9eTH+L+JkzSbRqZG6b28ntR+jplH8U+8iwGCLYLNBi3FIkHqlf2DvzFZa4vTVQP
-            d0unhrCNQNoLhki4ojCWoYz/vAYcGBmmT3VLuBxMbv1sxHf82lU81oqi38NnEdxX
-            R9MDJzSwgEo5OSg4M356g3zQChQompaB7e3EBwKBgFJNfYgHHuG7+rtVXx3ovK4O
-            TpzKIEuD/X1X3XNwqz5qqB2XzC/edD26zps4bnLSQFZp7TtfByAO6+vhyUzhm/FH
-            CEN1Kufm6/YDs1CWMTjZAKJ5+2IuWof25aAmdWeAtzBSMsWeDe8hgWtrqgnL847x
-            kvOIMrxmBmMCd6gs1uIn
+            MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDey0BMXuQRtCwi
+            gZtjoAmmcHXSGaVr/KEqgjtCzuhgH6hBW/a1PKeW+PiydJqzZ5k0rH9v5Y1hmuBI
+            3SYh0Xs7E8ae+yntbdcHyUuk+3f5tGJMJcAyI+9clmpoyXfgSZiaskoCiwASqF64
+            VCen0g37VF+2KhXZGO37bKmXLW+ms2o4PAane8E9+zEt71lIZIhAAa/nWdXNF0Wv
+            xzqplLLp8cxF+SMaJaMPpYt2WBFDxVfViUbZYE4ioJ3s6MdcsrezkhMlDAQJ/WHg
+            TbJcMNot3m8dQwcbbNqVKTWqN7RP8BSW2NT6qHgZ2xbPAu8Igs8WXbu1sCV5dRmh
+            WfJDMThtAgMBAAECggEAHmmz9gjpDMKh2LcFEYE1+Aa3iq3uDzLuBDnBYbIRdhe0
+            NfHaGGz2eq0zc9bnjFB60T4v6kQ1e8qyzbeEnk60igC91xN1qn/ZP+qaXSPnwYo+
+            deMcXKvbn7G3xmSkLNWXE5z9beHwKVvbDEIOpMHPn0yqARm3IErfJ7hyYRz2dhSc
+            Em9xq0AMaZVsuP5KitiVUsgJ5wGaI7yBb0UgPgsHP1PoHX540TpozCqKcBAYiX7S
+            Wzr1+XVoHGRAY5s0Tn12luCdjoNMf3qiwPmU1MK3ElPvLOx1SvWMPPb/J0niIMFM
+            laUcmIqiFCYWUdYP6gUd/RJw3Zsbo2ijDDf5A5DZIQKBgQD2SM4s/pKyaS/5cVSH
+            SJT54yDiRh0bYe/iH+7t27MR2Lnrmc6x0sW1iaHiTY/3EvOhzlsRN3Rkq+FyfdtG
+            UmuOzBf33WmJILMAdr+Jop6J+N+5+Vu03NeFsMgFN3BFZiWZM2JJOLXhJejCwlJw
+            UxwH5MhOscqNH17nAAzon4/hYQKBgQDnlTgB6oE8oFUOY9FwVpyfg7EPePJaTeP5
+            MqvwUInWDXyZWC82XHqs30NVhysbyIyF/RH5f+pks5u+NLmQPl8jHTmcBhLsfe+v
+            R1YJH68elGJPcgUIOAydvT+kO2+X/JJksrqmlIHOVkV08Bz9cY+OAfZvAoKAF7+b
+            5ySrR2vWjQKBgQCDBkS5503AIPnm6QYhWtn2/4DVIJwHn1jxoi+I16My0WxIDXHL
+            ZOjOJcS8EquOtMRsxs3oIOqJTHAKay6nAN48ABSYR3EIBR92Fbbc0Gkr2f2cgS7q
+            z7rRYzVmoRHXufoywQV/Eu6gM3zbcGpPW8fD41E1nJy364KfvoUflRQEwQKBgAzR
+            6ePRQ45DofHF/NYnNUxvUeH1ZBUzsqcc8v++taKv5HHou9Rakj/3rBaUAQLsuzq/
+            o7sYJbWla72/1XXyvfmHqKTGgU2uOxKM9GpU4rDirf6P5U9rKuegjmFdGPRk+wWw
+            Dz0hg34UsIukrzYojzXhTe8fSHIm3miXBySkM4gRAoGADG+WvgD4p9TAUai9X+vn
+            i6bCEL76aGR6mVvBhbTkWhxjOb2pFN5vBgxmOyH8GakgLC03j7hyBlCDCnhOeUhe
+            DZUFxH0KVIOQh4Y40Il509bTzKtrZT5sIZUFeclrcODgb4CuFaXlU8T2YcBg/pov
+            Rgael6n33wC1p/KkSV7TfnA=
             -----END PRIVATE KEY-----
             """;
 }
