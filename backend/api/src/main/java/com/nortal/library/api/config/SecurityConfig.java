@@ -1,17 +1,23 @@
 package com.nortal.library.api.config;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -21,13 +27,17 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class SecurityConfig {
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Value("${library.security.enforce:true}")
     private boolean enforceSecurity;
 
+    @Value("${library.security.jwt.public-key-location}")
+    private Resource publicKey;
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable()).cors(Customizer.withDefaults());
+        http.csrf(AbstractHttpConfigurer::disable).cors(Customizer.withDefaults());
 
         if (enforceSecurity) {
             http.authorizeHttpRequests(
@@ -68,8 +78,18 @@ public class SecurityConfig {
 
     @Bean
     JwtDecoder jwtDecoder() throws Exception {
-        RSAPublicKey publicKey = loadPublicKey(PUBLIC_KEY_PEM);
-        return NimbusJwtDecoder.withPublicKey(publicKey).build();
+        if (enforceSecurity) {
+            RSAPublicKey key = loadPublicKey(readPem(publicKey));
+            return NimbusJwtDecoder.withPublicKey(key).build();
+        } else {
+            log.warn("Public key not found, skipping JwtDecoder creation");
+            return null;
+        }
+    }
+
+    private String readPem(Resource resource) throws IOException {
+        return new String(resource.getInputStream().readAllBytes(),
+                StandardCharsets.UTF_8);
     }
 
     private RSAPublicKey loadPublicKey(String pem) throws Exception {
@@ -84,16 +104,4 @@ public class SecurityConfig {
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decoded);
         return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(keySpec);
     }
-
-    private static final String PUBLIC_KEY_PEM = """
-            -----BEGIN PUBLIC KEY-----
-            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3stATF7kEbQsIoGbY6AJ
-            pnB10hmla/yhKoI7Qs7oYB+oQVv2tTynlvj4snSas2eZNKx/b+WNYZrgSN0mIdF7
-            OxPGnvsp7W3XB8lLpPt3+bRiTCXAMiPvXJZqaMl34EmYmrJKAosAEqheuFQnp9IN
-            +1RftioV2Rjt+2yply1vprNqODwGp3vBPfsxLe9ZSGSIQAGv51nVzRdFr8c6qZSy
-            6fHMRfkjGiWjD6WLdlgRQ8VX1YlG2WBOIqCd7OjHXLK3s5ITJQwECf1h4E2yXDDa
-            Ld5vHUMHG2zalSk1qje0T/AUltjU+qh4GdsWzwLvCILPFl27tbAleXUZoVnyQzE4
-            bQIDAQAB
-            -----END PUBLIC KEY-----
-            """;
 }

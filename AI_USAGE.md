@@ -11,8 +11,22 @@
 - Changed DB setting in [application.yaml](backend/api/src/main/resources/application.yaml) for that.
 - Now DB is saved to the local file instead of memory. It does not affect performance test and keeps all things saved.
 - If performance test [run-perf.mjs](/tools/run-perf.mjs) got ran a few times - performance getting better as CPU busts.
-- Generated new `PUBLIC_KEY_PEM` and `PRIVATE_KEY_PEM` keys as existing were not working for generating `JWT`
-- Generated `JWT` with enabled security, tested with `Postman` - all works good.
+- Generated new `PUBLIC_KEY_PEM` and `PRIVATE_KEY_PEM` keys as existing were failing generating `JWT`
+- Created `keys` [folder](backend/api/src/main/resources/keys) to keep those keys
+
+```bash
+cd keys
+# Generate private key (PKCS#8, unencrypted)
+openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
+
+# Extract public key
+openssl rsa -pubout -in private_key.pem -out public_key.pem
+```
+
+- Refactored `SecurityConfig` and `DevAuthConfig` and `application.yaml` a bit to read from those keys, not form
+  hardcoded values
+- Added keys to `.gitignore` - otherwise `GitHub` is crying about private key exposing
+- Paste generated token into created [requests.http](requests.http) for checking endpoints
 - Almost all tasks were quite easy for me. Excepting a few bugs in initial project version ;). Still it was very
   interesting and exciting task - I have never done
   correction of the code before. I spent much time alone completing `kood/Jõhvi` Java FullStack specialization during my

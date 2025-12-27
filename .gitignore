@@ -35,6 +35,11 @@ build/
 out/
 
 # ===============================
+# JWT Security
+# ===============================
+*.pem
+
+# ===============================
 # OS Files (Ubuntu/macOS/Windows)
 # ===============================
 # macOS
@@ -54,7 +59,6 @@ Desktop.ini
 # Logs / Temporary files
 # ===============================
 logs/
-*.log
 *.tmp
 *.bak
 *.swp
