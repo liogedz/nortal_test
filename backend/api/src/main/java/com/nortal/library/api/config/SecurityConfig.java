@@ -42,7 +42,8 @@ public class SecurityConfig {
         if (enforceSecurity) {
             http.authorizeHttpRequests(
                             auth ->
-                                    auth.requestMatchers("/api/health")
+                                    auth.requestMatchers("/api/health",
+                                                    "/dev")
                                             .permitAll()
                                             .requestMatchers(HttpMethod.GET,
                                                     "/api/**")
