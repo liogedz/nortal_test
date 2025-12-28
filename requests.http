@@ -2,7 +2,7 @@
 GET http://localhost:8080/dev
 
 > {%
-    client.global.set("auth_token", response.body);
+    client.global.set("auth_token", response.body.token);
 %}
 
 ### GET books
