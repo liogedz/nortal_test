@@ -89,7 +89,7 @@ public class SecurityConfig {
     }
 
     private String readPem(Resource resource) throws IOException {
-        return new String(resource.getInputStream().readAllBytes(),
+        return new String(resource.getContentAsByteArray(),
                 StandardCharsets.UTF_8);
     }
 

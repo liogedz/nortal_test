@@ -12,16 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/dev")
 public class DevTokenController {
 
-    @GetMapping
-    public ResponseEntity<JwtResponse> demoToken() {
-        if (DevAuthConfig.DEMO_JWT == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new JwtResponse("Token not generated",
-                            null));
-        }
-        return ResponseEntity.ok(
-                new JwtResponse("Jwt token",
-                        DevAuthConfig.DEMO_JWT)
-        );
+  @GetMapping
+  public ResponseEntity<JwtResponse> demoToken() {
+    if (DevAuthConfig.DEMO_JWT == null) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(new JwtResponse("Token not generated", null));
     }
+    return ResponseEntity.ok(new JwtResponse("Jwt token", DevAuthConfig.DEMO_JWT));
+  }
 }
